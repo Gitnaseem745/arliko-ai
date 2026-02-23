@@ -20,11 +20,9 @@ export const sendMessage = async (req, res, next) => {
         }
 
         let chat = await Conversation.findById(chatId);
-        let isNew = false;
 
         if (!chat) {
             chat = await Conversation.create({ messages: [] });
-            isNew = true;
         }
 
         chat.messages.push({ role: "user", content: message });

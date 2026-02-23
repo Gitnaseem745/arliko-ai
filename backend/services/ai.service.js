@@ -8,7 +8,6 @@ export const generateAIResponse = async (history, userMessage) => {
         model: "gemini-2.5-flash"
     });
 
-    // Exclude the last message (current user msg) since it's sent via sendMessage
     const pastHistory = history.slice(0, -1);
     const chat = model.startChat({
         history: pastHistory.map(msg => ({
