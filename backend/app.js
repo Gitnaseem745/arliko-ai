@@ -2,6 +2,7 @@ import e from "express";
 import cors from "cors";
 import path from "path";
 import chatRoutes from "./routes/chat.routes.js";
+import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = e();
@@ -10,6 +11,7 @@ app.use(cors());
 app.use(e.json());
 app.use(e.static("public"));
 
+app.use("/api", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chats", chatRoutes);
 
