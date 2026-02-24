@@ -10,12 +10,49 @@
 
 <body>
 
-    <div id="chat-container">
-        <div id="messages"></div>
+    <div id="sidebar">
+        <div id="sidebarHeader">
+            <span id="sidebarTitle">Arliko</span>
+            <button id="newChatBtn" title="New chat">&#43;</button>
+        </div>
 
-        <div id="input-area">
-            <input type="text" id="messageInput" placeholder="Ask anything">
-            <button onclick="sendMessage()" title="Send">&#9654;</button>
+        <div id="chats">
+            <div class="chat-item active">
+                <span class="chat-label">New conversation</span>
+            </div>
+            <div class="chat-item">
+                <span class="chat-label">Chat 1</span>
+            </div>
+            <div class="chat-item">
+                <span class="chat-label">Chat 2</span>
+            </div>
+            <div class="chat-item">
+                <span class="chat-label">Chat 3</span>
+            </div>
+        </div>
+
+        <div id="sidebarFooter">
+            <div id="userInfo">
+                <div id="userAvatar">S</div>
+                <span id="userName">Sahil</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="main">
+        <button id="openSidebar" title="Open sidebar">&#9776;</button>
+
+        <div id="chat-container">
+            <div id="messages"></div>
+
+            <div id="input-area">
+                <input type="text" id="messageInput" placeholder="Ask anything">
+                <button onclick="sendMessage()" title="Send">&#9654;</button>
+            </div>
+
+            <div id="disclaimer">
+                <p>Arliko can made mistakes. Check important info.</p>
+            </div>
         </div>
     </div>
 
