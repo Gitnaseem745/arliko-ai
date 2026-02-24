@@ -1,9 +1,17 @@
+import mongoose from "mongoose";
 import Conversation from "../models/conversation.model.js";
 import { generateAIResponse } from "../services/ai.service.js";
 
 export const getConversation = async (req, res, next) => {
     try {
-        const chat = await Conversation.findById(req.params.chatId);
+        const { chatId } = req.params;
+
+        if (!chatId || chatId === "null" ||
+            !mongoose.Types.ObjectId.isValid(chatId)) {
+            return res.status(404).json({ error: "Invalid chatId" });
+        }
+
+        const chat = await Conversation.findById(chatId);
         res.json(chat || { messages: [] });
     } catch (e) {
         next(e);

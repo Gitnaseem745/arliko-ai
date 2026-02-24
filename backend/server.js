@@ -9,7 +9,7 @@ const startServer = async () => {
     await connectDB();
 
     app.listen(ENV.PORT, () => {
-        console.log(`Server running on port ${ENV.PORT}`);
+        console.log(`Server running on port http://localhost:${ENV.PORT}`);
     });
 };
 
