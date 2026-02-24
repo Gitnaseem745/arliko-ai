@@ -123,6 +123,10 @@ body {
     text-overflow: ellipsis;
 }
 
+/* .chat-id {
+    visibility: hidden;
+} */
+
 /* ── Sidebar Footer ──────────────────────────────── */
 #sidebarFooter {
     padding: 12px 14px;

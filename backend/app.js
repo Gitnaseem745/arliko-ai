@@ -11,6 +11,7 @@ app.use(e.json());
 app.use(e.static("public"));
 
 app.use("/api/chat", chatRoutes);
+app.use("/api/chats", chatRoutes);
 
 // Serve index.html for /chat/:chatId routes (SPA)
 app.get("/chat/:chatId", (req, res) => {

@@ -46,3 +46,13 @@ export const sendMessage = async (req, res, next) => {
         next(e);
     }
 }
+
+
+export const getAllConversations = async (req, res, next) => {
+    try {
+        const chats = await Conversation.find().select("_id title").sort({ updatedAt: -1 });
+        res.json({ chats, totalChats: chats.length });
+    } catch (e) {
+        next(e);
+    }
+}
