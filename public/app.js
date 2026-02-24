@@ -32,18 +32,21 @@ const renderMessages = messages => {
 const sendMessage = async () => {
     const input = document.getElementById("messageInput");
 
+    const message = input.value;
+    input.value = "";
+
     const res = await fetch(`/api/chat/${chatId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input.value })
+        body: JSON.stringify({ message })
     });
+
     const data = await res.json();
     if (data.chatId && data.chatId !== chatId) {
         chatId = data.chatId;
         window.history.replaceState(null, "", `/chat/${chatId}`);
     }
 
-    input.value = "";
     loadChat();
 };
 
