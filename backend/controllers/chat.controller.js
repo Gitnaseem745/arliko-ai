@@ -33,11 +33,18 @@ export const sendMessage = async (req, res, next) => {
             chat = await Conversation.create({ messages: [] });
         }
 
-        chat.messages.push({ role: "user", content: message });
-
         const reply = await generateAIResponse(chat.messages, message);
 
-        chat.messages.push({ role: "assistant", content: reply });
+        chat.messages.push(
+            {
+                role: "user",
+                content: message
+            },
+            {
+                role: "assistant",
+                content: reply
+            }
+        );
 
         await chat.save();
 

@@ -8,9 +8,8 @@ export const generateAIResponse = async (history, userMessage) => {
         model: "gemini-2.5-flash"
     });
 
-    const pastHistory = history.slice(0, -1);
     const chat = model.startChat({
-        history: pastHistory.map(msg => ({
+        history: history.map(msg => ({
             role: msg.role === "assistant" ? "model" : "user",
             parts: [{ text: msg.content }]
         }))
