@@ -55,9 +55,19 @@ const renderMessages = messages => {
     messages.forEach(m => {
         const div = document.createElement("div");
         div.className = m.role;
-        div.textContent = m.content;
+
+        if (m.role == "assistant") {
+            div.innerHTML = DOMPurify.sanitize(marked.parse(m.content));
+        } else {
+            div.textContent = m.content;
+        }
+
         messagesContainer.appendChild(div);
     });
+
+    document.querySelectorAll("pre code").forEach(b => {
+        hljs.highlightElement(b);
+    })
 };
 
 const sendMessage = async () => {
