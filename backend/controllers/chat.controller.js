@@ -65,3 +65,37 @@ export const getAllConversations = async (req, res, next) => {
         next(e);
     }
 }
+
+export const editConversationTitle = async (req, res, next) => {
+    try {
+        const { userId, chatId } = req.params;
+        const { newTitle } = req.body;
+        checkParams.objectId(userId, "userId");
+        checkParams.objectId(chatId, "chatId");
+        checkParams.required(newTitle, "title");
+
+        const chat = await Conversation.findOneAndUpdate({ _id: chatId, userId }, { title: newTitle }, { new: true });
+
+        if (!chat) return res.status(404).json({ error: "Conversation not found" });
+
+        res.json({ message: "title updated successfully" });
+    } catch (e) {
+        next(e)
+    }
+}
+
+export const deleteConversation = async (req, res, next) => {
+    try {
+        const { userId, chatId } = req.params;
+        checkParams.objectId(userId, "userId");
+        checkParams.objectId(chatId, "chatId");
+
+        const chat = await Conversation.findOneAndDelete({ _id: chatId, userId });
+
+        if (!chat) return res.status(404).json({ error: "Conversation not found" });
+
+        res.json({ message: "conversation deleted successfully" });
+    } catch (e) {
+        next(e)
+    }
+}
