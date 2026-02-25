@@ -5,6 +5,7 @@ import dns from "dns";
 
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
+// boots up the server — connects to DB first, then starts listening
 const startServer = async () => {
     await connectDB();
 

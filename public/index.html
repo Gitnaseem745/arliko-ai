@@ -20,14 +20,46 @@
 
         <div id="sidebarFooter">
             <div id="userInfo">
-                <div id="userAvatar">S</div>
-                <span id="userName">Sahil</span>
+                <div id="userAvatar"></div>
+                <span id="userName"></span>
             </div>
+            <button id="logoutBtn" class="logout-btn hidden">Logout</button>
+        </div>
+    </div>
+
+    <!-- Auth Modal Overlay -->
+    <div id="authOverlay" class="auth-overlay hidden">
+        <div class="auth-modal">
+            <button class="auth-close" id="authClose">&times;</button>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Login</button>
+                <button class="auth-tab" data-tab="signup">Sign Up</button>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <p class="auth-error" id="loginError"></p>
+                <button type="submit" class="auth-submit">Login</button>
+            </form>
+
+            <form id="signupForm" class="auth-form hidden">
+                <input type="text" id="signupUsername" placeholder="Username" required>
+                <input type="email" id="signupEmail" placeholder="Email" required>
+                <input type="password" id="signupPassword" placeholder="Password (min 8 chars)" required minlength="8">
+                <p class="auth-error" id="signupError"></p>
+                <button type="submit" class="auth-submit">Sign Up</button>
+            </form>
         </div>
     </div>
 
     <div id="main">
         <button id="openSidebar" title="Open sidebar">&#9776;</button>
+
+        <div id="authButtons">
+            <button class="auth-btn" id="loginBtn">Login</button>
+            <button class="auth-btn" id="signupBtn">Sign Up</button>
+        </div>
 
         <div id="chat-container">
             <div id="messages"></div>

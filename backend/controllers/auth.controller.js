@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import { hash, compare } from "bcrypt";
 
+// registers a new user — expects email, password, username in body
 export const signUp = async (req, res, next) => {
     try {
         const { email, password, username } = req.body;
@@ -26,6 +27,7 @@ export const signUp = async (req, res, next) => {
     }
 }
 
+// authenticates a user by email + password, returns userId and username
 export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -46,7 +48,7 @@ export const login = async (req, res, next) => {
             return res.status(404).json({ error: "Password is invalid." })
         }
 
-        res.json({ userId: user._id, message: "Login successfull." });
+        res.json({ userId: user._id, username: user.username, message: "Login successfull." });
     } catch (e) {
         next(e);
     }

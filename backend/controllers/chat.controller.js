@@ -2,35 +2,45 @@ import mongoose from "mongoose";
 import Conversation from "../models/conversation.model.js";
 import { generateAIResponse } from "../services/ai.service.js";
 
+// fetches a single conversation by chatId, scoped to the user
 export const getConversation = async (req, res, next) => {
     try {
-        const { chatId } = req.params;
+        const { userId, chatId } = req.params;
 
         if (!chatId || chatId === "null" ||
             !mongoose.Types.ObjectId.isValid(chatId)) {
             return res.status(404).json({ error: "Invalid chatId" });
         }
 
-        const chat = await Conversation.findById(chatId);
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ error: "Invalid userId" });
+        }
+
+        const chat = await Conversation.findOne({ _id: chatId, userId });
         res.json(chat || { messages: [] });
     } catch (e) {
         next(e);
     }
 };
 
+// handles sending a message — creates the convo if it doesn't exist, gets AI reply, saves both
 export const sendMessage = async (req, res, next) => {
     try {
         const { message } = req.body;
-        const { chatId } = req.params;
+        const { userId, chatId } = req.params;
 
         if (!message || !chatId) {
             return res.status(400).json({ error: "Please provide a message and chatId." });
         }
 
-        let chat = await Conversation.findById(chatId);
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ error: "Invalid userId" });
+        }
+
+        let chat = await Conversation.findOne({ _id: chatId, userId });
 
         if (!chat) {
-            chat = await Conversation.create({ messages: [] });
+            chat = await Conversation.create({ userId, messages: [] });
         }
 
         const reply = await generateAIResponse(chat.messages, message);
@@ -55,9 +65,16 @@ export const sendMessage = async (req, res, next) => {
 }
 
 
+// returns all conversation titles for a given user (sorted newest first)
 export const getAllConversations = async (req, res, next) => {
     try {
-        const chats = await Conversation.find().select("_id title").sort({ updatedAt: -1 });
+        const { userId } = req.params;
+
+        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ error: "Invalid userId" });
+        }
+
+        const chats = await Conversation.find({ userId }).select("_id title").sort({ updatedAt: -1 });
         res.json({ chats, totalChats: chats.length });
     } catch (e) {
         next(e);

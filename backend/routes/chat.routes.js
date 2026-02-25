@@ -3,8 +3,8 @@ import { getAllConversations, getConversation, sendMessage } from "../controller
 
 const router = Router();
 
-router.get("/", getAllConversations);
-router.get("/:chatId", getConversation);
-router.post("/:chatId", sendMessage);
+router.get("/:userId", getAllConversations);
+router.get("/:userId/:chatId", getConversation);
+router.post("/:userId/:chatId", sendMessage);
 
 export default router;
