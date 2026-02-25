@@ -263,6 +263,19 @@ document.getElementById("newChatBtn").onclick = () => {
     window.location.href = "/";
 };
 
+// mobile sidebar open/close  
+const openSidebarBtn = document.getElementById("openSidebar");
+const closeSidebarBtn = document.getElementById("closeSidebar");
+const sidebar = document.getElementById("sidebar");
+
+openSidebarBtn.onclick = () => {
+    sidebar.style.transform = "translateX(0%)"
+}
+
+closeSidebarBtn.onclick = () => {
+    sidebar.style.transform = "translateX(-100%)"
+}
+
 // init
 updateUIForAuth();
 if (!userId) showModal("login");
