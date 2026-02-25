@@ -3,6 +3,15 @@ import { ENV } from "../config/env.js";
 
 const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY);
 
+// generate title for new chat
+export const generateTitle = async (firstMessage) => {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const result = await model.generateContent(
+        `Generate a short 4-6 word title for a chat that starts with: "${firstMessage}". Return only the title, no quotes.`
+    );
+    return result.response.text().trim();
+}
+
 // takes the chat history + new message, sends it to Gemini, returns the AI's text response
 export const generateAIResponse = async (history, userMessage) => {
     const model = genAI.getGenerativeModel({

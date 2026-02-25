@@ -1,5 +1,5 @@
 import Conversation from "../models/conversation.model.js";
-import { generateAIResponse } from "../services/ai.service.js";
+import { generateAIResponse, generateTitle } from "../services/ai.service.js";
 import checkParams from "../utils/checkParams.js";
 
 // fetches a single conversation by chatId, scoped to the user
@@ -29,6 +29,10 @@ export const sendMessage = async (req, res, next) => {
 
         if (!chat) {
             chat = await Conversation.create({ userId, messages: [] });
+        }
+
+        if (chat.messages.length === 0) {
+            chat.title = await generateTitle(message);
         }
 
         const reply = await generateAIResponse(chat.messages, message);
