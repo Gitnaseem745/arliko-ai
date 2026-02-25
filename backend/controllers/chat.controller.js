@@ -74,7 +74,7 @@ export const editConversationTitle = async (req, res, next) => {
         checkParams.objectId(chatId, "chatId");
         checkParams.required(newTitle, "title");
 
-        const chat = await Conversation.findOneAndUpdate({ _id: chatId, userId }, { title: newTitle }, { new: true });
+        const chat = await Conversation.findOneAndUpdate({ _id: chatId, userId }, { title: newTitle }, { returnDocument: true });
 
         if (!chat) return res.status(404).json({ error: "Conversation not found" });
 

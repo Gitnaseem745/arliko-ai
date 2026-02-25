@@ -167,7 +167,7 @@ const loadChats = async () => {
     renderTitles(data.chats || [{ title: "Dummy Chat", _id: "1234" }])
 }
 
-// builds the sidebar chat list items and sets up click handlers to switch chats
+// builds the sidebar chat list items with edit button, sets up click handlers to switch chats
 const renderTitles = chats => {
     const chatsContainer = document.getElementById("chats");
     chatsContainer.innerHTML = "";
@@ -181,14 +181,109 @@ const renderTitles = chats => {
         span.className = "chat-label";
         span.textContent = c.title || "New Chat";
 
+        // action buttons container (pencil edit / check confirm / x cancel)
+        const actions = document.createElement("div");
+        actions.className = "chat-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "chat-action-btn";
+        editBtn.innerHTML = "&#9998;"; // pencil icon
+        editBtn.title = "Edit title";
+
+        actions.appendChild(editBtn);
         div.appendChild(span);
+        div.appendChild(actions);
         chatsContainer.appendChild(div);
 
-        div.onclick = () => {
+        // clicking the chat item switches to that conversation
+        div.onclick = (e) => {
+            if (e.target.closest(".chat-action-btn") || div.classList.contains("editing")) return;
             chatId = c._id;
             window.history.pushState(null, "", `/chat/${chatId}`);
             loadChat();
             loadChats();
+        };
+
+        // pencil click → switch to inline edit mode
+        editBtn.onclick = (e) => {
+            e.stopPropagation();
+            // close any other open edits first
+            document.querySelectorAll(".chat-item.editing").forEach(item => {
+                item.classList.remove("editing");
+                const label = item.querySelector(".chat-label");
+                const input = item.querySelector(".chat-edit-input");
+                if (input) {
+                    label.style.display = "";
+                    input.remove();
+                }
+                const actionsDiv = item.querySelector(".chat-actions");
+                actionsDiv.innerHTML = "";
+                const newEditBtn = document.createElement("button");
+                newEditBtn.className = "chat-action-btn";
+                newEditBtn.innerHTML = "&#9998;";
+                newEditBtn.title = "Edit title";
+                actionsDiv.appendChild(newEditBtn);
+            });
+
+            div.classList.add("editing");
+            span.style.display = "none";
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "chat-edit-input";
+            input.value = c.title || "New Chat";
+            div.insertBefore(input, actions);
+            input.focus();
+            input.select();
+
+            // replace pencil with check + cancel buttons
+            actions.innerHTML = "";
+
+            const confirmBtn = document.createElement("button");
+            confirmBtn.className = "chat-action-btn";
+            confirmBtn.innerHTML = "&#10003;"; // checkmark
+            confirmBtn.title = "Save";
+
+            const cancelBtn = document.createElement("button");
+            cancelBtn.className = "chat-action-btn";
+            cancelBtn.innerHTML = "&#10005;"; // x mark
+            cancelBtn.title = "Cancel";
+
+            actions.appendChild(confirmBtn);
+            actions.appendChild(cancelBtn);
+
+            const saveEdit = async () => {
+                const newTitle = input.value.trim();
+                if (!newTitle || newTitle === (c.title || "New Chat")) {
+                    cancelEdit();
+                    return;
+                }
+                await editConversationTitle(c._id, newTitle);
+                c.title = newTitle;
+                span.textContent = newTitle;
+                cancelEdit();
+            };
+
+            const cancelEdit = () => {
+                div.classList.remove("editing");
+                span.style.display = "";
+                input.remove();
+                actions.innerHTML = "";
+                const restoreBtn = document.createElement("button");
+                restoreBtn.className = "chat-action-btn";
+                restoreBtn.innerHTML = "&#9998;";
+                restoreBtn.title = "Edit title";
+                actions.appendChild(restoreBtn);
+                restoreBtn.onclick = editBtn.onclick;
+            };
+
+            confirmBtn.onclick = (e) => { e.stopPropagation(); saveEdit(); };
+            cancelBtn.onclick = (e) => { e.stopPropagation(); cancelEdit(); };
+            input.onkeydown = (e) => {
+                if (e.key === "Enter") saveEdit();
+                if (e.key === "Escape") cancelEdit();
+            };
+            input.onclick = (e) => e.stopPropagation();
         };
     });
 }
@@ -274,6 +369,16 @@ openSidebarBtn.onclick = () => {
 
 closeSidebarBtn.onclick = () => {
     sidebar.style.transform = "translateX(-100%)"
+}
+
+// sends a PUT request to update the conversation title
+const editConversationTitle = async (targetChatId, newTitle) => {
+    const res = await fetch(`/api/chat/${userId}/${targetChatId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newTitle })
+    });
+    if (!res.ok) console.error("Failed to update title");
 }
 
 // init

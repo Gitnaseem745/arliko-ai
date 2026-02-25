@@ -111,6 +111,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    position: relative;
 }
 
 .chat-item:hover {
@@ -132,6 +133,59 @@ body {
 .chat-label {
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Chat Item Edit ──────────────────────────────── */
+.chat-actions {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.chat-item:hover .chat-actions,
+.chat-item.editing .chat-actions {
+    display: flex;
+}
+
+.chat-action-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #888;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    padding: 0;
+}
+
+.chat-action-btn:hover {
+    background: #2a2a2a;
+    color: #e8e8e8;
+}
+
+.chat-edit-input {
+    flex: 1;
+    min-width: 0;
+    background: #0f0f0f;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+    color: #e8e8e8;
+    font-size: 13px;
+    padding: 4px 8px;
+    outline: none;
+    font-family: inherit;
+}
+
+.chat-edit-input:focus {
+    border-color: #2563eb;
 }
 
 /* ── Sidebar Footer ──────────────────────────────── */
