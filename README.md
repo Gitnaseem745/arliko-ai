@@ -1,23 +1,24 @@
 # Arliko AI
 
-A full-stack AI chatbot web app powered by Google's Gemini 2.5 Flash model. Built with Express, MongoDB, and vanilla JS. Features a ChatGPT-style dark UI with sidebar, markdown rendering, and syntax-highlighted code blocks.
+A full-stack AI chatbot web app powered by Google's Gemini 2.5 Flash model. Built with Express 5, MongoDB, and vanilla JS. Features a ChatGPT-style dark UI with sidebar, markdown rendering, and syntax-highlighted code blocks.
 
 ## Tech Stack
 
-- **Backend:** Express 5, Mongoose 9, Google Generative AI SDK, bcrypt
+- **Backend:** Express 5, Mongoose 9, Google Generative AI SDK, bcrypt, morgan
 - **Frontend:** Vanilla HTML/CSS/JS, marked.js, DOMPurify, highlight.js
 - **Database:** MongoDB
 - **AI Model:** Gemini 2.5 Flash
 
 ## Features
 
-- AI-powered chat with conversation history
+- AI-powered chat using Gemini 2.5 Flash with conversation history
 - Markdown rendering with syntax-highlighted code blocks
-- ChatGPT/Gemini-style dark theme UI
+- ChatGPT-style dark theme UI
 - Sidebar with conversation list and new chat button
 - SPA-style client-side routing (`/chat/:chatId`)
-- User signup and login (bcrypt password hashing)
-- Responsive design (mobile sidebar toggle)
+- User signup and login with bcrypt password hashing
+- Per-user conversation storage
+- Responsive design with mobile sidebar toggle
 
 ## Setup
 
@@ -34,7 +35,7 @@ cd arliko-ai
 npm install
 ```
 
-3. Create a `.env` file in the root directory
+3. Create a `.env` file in the root directory (see `.env.example`)
 
 ```
 MONGO_URI=your_mongodb_connection_string
@@ -57,7 +58,7 @@ backend/
   server.js           - Entry point, DB connection, DNS config
   config/
     database.js       - MongoDB connection via Mongoose
-    env.js            - Environment variable loader
+    env.js            - Environment variable loader (PORT, MONGO_URI, GEMINI_API_KEY)
   controllers/
     auth.controller.js - Signup and login handlers
     chat.controller.js - Chat CRUD and AI response handlers
@@ -65,14 +66,14 @@ backend/
     error.middleware.js - Global error handler
   models/
     user.model.js       - User schema (email, passwordHash, username)
-    conversation.model.js - Conversation schema (title, messages)
+    conversation.model.js - Conversation schema (userId, title, messages[])
   routes/
     auth.routes.js     - Auth routes (/api/signup, /api/login)
-    chat.routes.js     - Chat routes (/api/chat, /api/chats)
+    chat.routes.js     - Chat routes (/api/chat/:userId/...)
   services/
     ai.service.js      - Gemini AI integration
 public/
-  index.html           - Chat UI with sidebar
+  index.html           - Chat UI with sidebar, auth modal
   app.js               - Client-side routing, fetch calls, markdown rendering
   style.css            - Dark theme, responsive layout, code block styles
 ```
@@ -83,6 +84,6 @@ public/
 |--------|----------|-------------|
 | `POST` | `/api/signup` | Register a new user |
 | `POST` | `/api/login` | Login with email and password |
-| `GET` | `/api/chats` | Get all conversations (id + title) |
-| `GET` | `/api/chat/:chatId` | Get a single conversation |
-| `POST` | `/api/chat/:chatId` | Send a message and get AI response |
+| `GET` | `/api/chat/:userId` | Get all conversations for a user |
+| `GET` | `/api/chat/:userId/:chatId` | Get a single conversation |
+| `POST` | `/api/chat/:userId/:chatId` | Send a message and get AI response |
