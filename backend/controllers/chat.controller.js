@@ -1,20 +1,13 @@
-import mongoose from "mongoose";
 import Conversation from "../models/conversation.model.js";
 import { generateAIResponse } from "../services/ai.service.js";
+import checkParams from "../utils/checkParams.js";
 
 // fetches a single conversation by chatId, scoped to the user
 export const getConversation = async (req, res, next) => {
     try {
         const { userId, chatId } = req.params;
-
-        if (!chatId || chatId === "null" ||
-            !mongoose.Types.ObjectId.isValid(chatId)) {
-            return res.status(404).json({ error: "Invalid chatId" });
-        }
-
-        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ error: "Invalid userId" });
-        }
+        checkParams.objectId(userId, "userId");
+        checkParams.objectId(chatId, "chatId");
 
         const chat = await Conversation.findOne({ _id: chatId, userId });
         res.json(chat || { messages: [] });
@@ -28,14 +21,9 @@ export const sendMessage = async (req, res, next) => {
     try {
         const { message } = req.body;
         const { userId, chatId } = req.params;
-
-        if (!message || !chatId) {
-            return res.status(400).json({ error: "Please provide a message and chatId." });
-        }
-
-        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ error: "Invalid userId" });
-        }
+        checkParams.objectId(userId, "userId");
+        checkParams.required(chatId, "chatId");
+        checkParams.required(message, "message");
 
         let chat = await Conversation.findOne({ _id: chatId, userId });
 
@@ -69,10 +57,7 @@ export const sendMessage = async (req, res, next) => {
 export const getAllConversations = async (req, res, next) => {
     try {
         const { userId } = req.params;
-
-        if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ error: "Invalid userId" });
-        }
+        checkParams.objectId(userId, "userId");
 
         const chats = await Conversation.find({ userId }).select("_id title").sort({ updatedAt: -1 });
         res.json({ chats, totalChats: chats.length });
