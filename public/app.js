@@ -311,6 +311,7 @@ const renderMessages = messages => {
         }
 
         messagesContainer.appendChild(div);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     });
 
     document.querySelectorAll("pre code").forEach(b => {
@@ -318,7 +319,7 @@ const renderMessages = messages => {
     })
 };
 
-// sends the user's message to the API, creates a new chat if needed, and refreshes the UI
+// sends the user's message to the API using EventSource (SSE) for streaming responses
 const sendMessage = async () => {
     const input = document.getElementById("messageInput");
 
@@ -338,20 +339,53 @@ const sendMessage = async () => {
         window.history.replaceState(null, "", `/chat/${chatId}`);
     }
 
-    const res = await fetch(`/api/chat/${userId}/${chatId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message })
-    });
+    // show user message immediately
+    const messagesContainer = document.getElementById("messages");
+    const userDiv = document.createElement("div");
+    userDiv.className = "user";
+    userDiv.textContent = message;
+    messagesContainer.appendChild(userDiv);
 
-    const data = await res.json();
-    if (data.chatId && data.chatId !== chatId) {
-        chatId = data.chatId;
-        window.history.replaceState(null, "", `/chat/${chatId}`);
-    }
+    // create assistant message div for streaming
+    const assistantDiv = document.createElement("div");
+    assistantDiv.className = "assistant";
+    assistantDiv.innerHTML = "generating..."
+    messagesContainer.appendChild(assistantDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    loadChat();
-    loadChats();
+    // use EventSource for streaming response
+    const eventSource = new EventSource(`/api/chat/stream/${userId}/${chatId}?message=${encodeURIComponent(message)}`);
+
+    let fullReply = "";
+
+    eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.done) {
+            eventSource.close();
+            if (data.chatId && data.chatId !== chatId) {
+                chatId = data.chatId;
+                window.history.replaceState(null, "", `/chat/${chatId}`);
+            }
+            // highlight code blocks after stream completes
+            assistantDiv.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+            loadChats();
+            return;
+        }
+
+        if (data.chunk) {
+            fullReply += data.chunk;
+            assistantDiv.innerHTML = DOMPurify.sanitize(marked.parse(fullReply));
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    };
+
+    eventSource.onerror = () => {
+        eventSource.close();
+        if (!fullReply) {
+            assistantDiv.textContent = "Something went wrong. Try again.";
+        }
+    };
 };
 
 document.getElementById("newChatBtn").onclick = () => {
