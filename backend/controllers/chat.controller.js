@@ -25,6 +25,10 @@ export const sendMessage = async (req, res, next) => {
         checkParams.required(chatId, "chatId");
         checkParams.required(message, "message");
 
+        if (Buffer.byteLength(message, 'utf8') > 102400) {
+            return res.status(400).json({ error: "Message too long (max 100KB)" });
+        }
+
         let chat = await Conversation.findOne({ _id: chatId, userId });
 
         if (!chat) {
@@ -67,6 +71,11 @@ export const sendMessageStream = async (req, res, next) => {
     checkParams.objectId(userId, "userId");
     checkParams.required(chatId, "chatId");
     checkParams.required(message, "message");
+
+    if (Buffer.byteLength(message, 'utf8') > 102400) {
+        res.write(`data: ${JSON.stringify({ error: "Message too long (max 100KB)", done: true })}\n\n`);
+        return res.end();
+    }
 
     let chat = await Conversation.findOne({ _id: chatId, userId });
 

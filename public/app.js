@@ -185,12 +185,32 @@ const renderTitles = chats => {
         const actions = document.createElement("div");
         actions.className = "chat-actions";
 
+        // edit buttom
         const editBtn = document.createElement("button");
         editBtn.className = "chat-action-btn";
         editBtn.innerHTML = "&#9998;"; // pencil icon
         editBtn.title = "Edit title";
 
         actions.appendChild(editBtn);
+
+        // delete button
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "chat-action-btn";
+        deleteBtn.innerHTML = "&#128465;"; // trash icon
+        deleteBtn.title = "Delete conversation";
+        actions.appendChild(deleteBtn);
+
+        deleteBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm("Delete this conversation?")) return;
+            await deleteConversation(c._id);
+            if (chatId === c._id) {
+                chatId = null;
+                window.history.replaceState(null, "", "/");
+                document.getElementById("messages").innerHTML = "";
+            }
+            loadChats();
+        };
         div.appendChild(span);
         div.appendChild(actions);
         chatsContainer.appendChild(div);
@@ -322,15 +342,19 @@ const renderMessages = messages => {
 // sends the user's message to the API using EventSource (SSE) for streaming responses
 const sendMessage = async () => {
     const input = document.getElementById("messageInput");
-
+    const sendBtn = document.getElementById("sendMessageButton");
     const message = input.value;
-    if (!message.trim()) return;
 
+    // message length validation (100KB = 102400 bytes)
+    if (new Blob([message]).size > 102400) {
+        alert("Message too long (max 100KB)");
+        return;
+    }
+    if (!message.trim()) return;
     if (!userId) {
         showModal("login");
         return;
     }
-
     input.value = "";
 
     // if on home page with no chatId, generate one now
@@ -349,42 +373,44 @@ const sendMessage = async () => {
     // create assistant message div for streaming
     const assistantDiv = document.createElement("div");
     assistantDiv.className = "assistant";
-    assistantDiv.innerHTML = "generating..."
+    assistantDiv.textContent = "Generating..."
     messagesContainer.appendChild(assistantDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
+    // disable input and sendBtn
+    input.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+
     // use EventSource for streaming response
     const eventSource = new EventSource(`/api/chat/stream/${userId}/${chatId}?message=${encodeURIComponent(message)}`);
-
     let fullReply = "";
-
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
-
         if (data.done) {
             eventSource.close();
             if (data.chatId && data.chatId !== chatId) {
                 chatId = data.chatId;
                 window.history.replaceState(null, "", `/chat/${chatId}`);
             }
-            // highlight code blocks after stream completes
             assistantDiv.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
             loadChats();
+            input.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
             return;
         }
-
         if (data.chunk) {
             fullReply += data.chunk;
             assistantDiv.innerHTML = DOMPurify.sanitize(marked.parse(fullReply));
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     };
-
     eventSource.onerror = () => {
         eventSource.close();
         if (!fullReply) {
             assistantDiv.textContent = "Something went wrong. Try again.";
         }
+        input.disabled = false;
+        if (sendBtn) sendBtn.disabled = false;
     };
 };
 
@@ -415,8 +441,27 @@ const editConversationTitle = async (targetChatId, newTitle) => {
     if (!res.ok) console.error("Failed to update title");
 }
 
+// delete conversation 
+const deleteConversation = async (targetChatId) => {
+    const res = await fetch(`/api/chat/${userId}/${targetChatId}`, {
+        method: "DELETE"
+    });
+    if (!res.ok) console.error("Failed to delete conversation");
+}
+
 // init
 updateUIForAuth();
 if (!userId) showModal("login");
 if (userId) loadChats();
 if (chatId && userId) loadChat();
+
+// enter key listener for message input
+const messageInput = document.getElementById("messageInput");
+if (messageInput) {
+    messageInput.addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+}
