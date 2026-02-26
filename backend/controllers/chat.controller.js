@@ -1,5 +1,5 @@
 import Conversation from "../models/conversation.model.js";
-import { generateAIResponse, generateTitle } from "../services/ai.service.js";
+import { generateAIResponse, generateAIResponseStream, generateTitle } from "../services/ai.service.js";
 import checkParams from "../utils/checkParams.js";
 
 // fetches a single conversation by chatId, scoped to the user
@@ -56,6 +56,50 @@ export const sendMessage = async (req, res, next) => {
     }
 }
 
+// handles sending a message in stream — creates the convo if it doesn't exist, gets AI reply in chunks, saves both
+export const sendMessageStream = async (req, res, next) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const message = req.query.message || req.body.message;
+    const { userId, chatId } = req.params;
+    checkParams.objectId(userId, "userId");
+    checkParams.required(chatId, "chatId");
+    checkParams.required(message, "message");
+
+    let chat = await Conversation.findOne({ _id: chatId, userId });
+
+    if (!chat) {
+        chat = await Conversation.create({ userId, messages: [] });
+    }
+
+    if (chat.messages.length === 0) {
+        chat.title = await generateTitle(message);
+    }
+
+    const fullReply = await generateAIResponseStream(chat.messages, message,
+        (chunk) => {
+            res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+        }
+    );
+
+    chat.messages.push(
+        {
+            role: "user",
+            content: message
+        },
+        {
+            role: "assistant",
+            content: fullReply
+        }
+    );
+
+    await chat.save();
+
+    res.write(`data: ${JSON.stringify({ done: true, chatId: chat._id })}\n\n`);
+    res.end();
+}
 
 // returns all conversation titles for a given user (sorted newest first)
 export const getAllConversations = async (req, res, next) => {

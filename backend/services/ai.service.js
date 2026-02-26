@@ -36,6 +36,34 @@ export const generateAIResponse = async (history, userMessage) => {
     return result.response.text();
 }
 
+export const generateAIResponseStream = async (history, userMessage, onChunk) => {
+    const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction
+    });
+
+    const chat = model.startChat({
+        history: history.map(msg => ({
+            role: msg.role === "assistant" ? "model" : "user",
+            parts: [{ text: msg.content }]
+        })),
+        generationConfig: {
+            temperature: 0.4,
+            topP: 0.9,
+            maxOutputTokens: 15000
+        }
+    });
+
+    const result = await chat.sendMessageStream(userMessage);
+    let fullText = "";
+    for await (const chunk of result.stream) {
+        const text = chunk.text();
+        fullText += text;
+        onChunk(text);
+    }
+    return fullText;
+};
+
 // System prompt — edit this to change Arliko's personality and behavior
 const systemInstruction = `
 You are Arliko, a precise, structured, and engineering-focused AI assistant.

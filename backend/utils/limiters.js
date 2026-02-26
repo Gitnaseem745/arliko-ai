@@ -8,6 +8,6 @@ export const limiter = rateLimit({
 
 export const aiLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 10,
+    max: 5, // updated accordingly to gemini-2.5-flash free tier that is 5 (RPM) 
     message: { error: "AI rate limit reached. Wait a moment." }
 });
