@@ -1,10 +1,12 @@
 // ── Auth State ──────────────────────────────────────
 
-// grab userId and username from localStorage (returns null if not logged in)
+// auth helpers: token + user info
+const getToken = () => localStorage.getItem("token");
 const getUserId = () => localStorage.getItem("userId");
 const getUsername = () => localStorage.getItem("username");
 
 let userId = getUserId();
+let token = getToken();
 
 // ── Auth UI Elements ────────────────────────────────
 const authOverlay = document.getElementById("authOverlay");
@@ -84,8 +86,10 @@ loginForm.onsubmit = async e => {
             return;
         }
 
+        localStorage.setItem("token", data.token);
         localStorage.setItem("userId", data.userId);
         localStorage.setItem("username", data.username || document.getElementById("loginEmail").value.split("@")[0]);
+        token = data.token;
         userId = data.userId;
         hideModal();
         updateUIForAuth();
@@ -124,8 +128,10 @@ signupForm.onsubmit = async e => {
             return;
         }
 
+        localStorage.setItem("token", data.token);
         localStorage.setItem("userId", data.userId);
         localStorage.setItem("username", username);
+        token = data.token;
         userId = data.userId;
         hideModal();
         updateUIForAuth();
@@ -162,9 +168,11 @@ let chatId = getChatId();
 
 // fetches all conversations for the current user and renders the sidebar list
 const loadChats = async () => {
-    const res = await fetch(`/api/chats/${userId}`);
+    const res = await fetch(`/api/chats`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
     const data = await res.json();
-    renderTitles(data.chats || [{ title: "Dummy Chat", _id: "1234" }])
+    renderTitles(data.chats || [])
 }
 
 // builds the sidebar chat list items with edit button, sets up click handlers to switch chats
@@ -310,7 +318,9 @@ const renderTitles = chats => {
 
 // loads a single conversation's messages from the server
 const loadChat = async () => {
-    const res = await fetch(`/api/chat/${userId}/${chatId}`);
+    const res = await fetch(`/api/chat/${chatId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+    });
     const chat = await res.json();
     renderMessages(chat.messages || []);
 }
@@ -379,10 +389,12 @@ const sendMessage = async () => {
 
     // disable input and sendBtn
     input.disabled = true;
-    if (sendBtn) sendBtn.disabled = true;
+    const sendBtnEl = document.querySelector("#input-area button[title='Send']");
+    if (sendBtnEl) sendBtnEl.disabled = true;
 
-    // use EventSource for streaming response
-    const eventSource = new EventSource(`/api/chat/stream/${userId}/${chatId}?message=${encodeURIComponent(message)}`);
+    // use EventSource for streaming response (token passed as query param for SSE)
+    const esToken = token || getToken();
+    const eventSource = new EventSource(`/api/chat/stream/${chatId}?message=${encodeURIComponent(message)}&token=${encodeURIComponent(esToken)}`);
     let fullReply = "";
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -395,7 +407,7 @@ const sendMessage = async () => {
             assistantDiv.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
             loadChats();
             input.disabled = false;
-            if (sendBtn) sendBtn.disabled = false;
+            if (sendBtnEl) sendBtnEl.disabled = false;
             return;
         }
         if (data.chunk) {
@@ -410,7 +422,7 @@ const sendMessage = async () => {
             assistantDiv.textContent = "Something went wrong. Try again.";
         }
         input.disabled = false;
-        if (sendBtn) sendBtn.disabled = false;
+        if (sendBtnEl) sendBtnEl.disabled = false;
     };
 };
 
@@ -433,9 +445,9 @@ closeSidebarBtn.onclick = () => {
 
 // sends a PUT request to update the conversation title
 const editConversationTitle = async (targetChatId, newTitle) => {
-    const res = await fetch(`/api/chat/${userId}/${targetChatId}`, {
+    const res = await fetch(`/api/chat/${targetChatId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ newTitle })
     });
     if (!res.ok) console.error("Failed to update title");
@@ -443,8 +455,9 @@ const editConversationTitle = async (targetChatId, newTitle) => {
 
 // delete conversation 
 const deleteConversation = async (targetChatId) => {
-    const res = await fetch(`/api/chat/${userId}/${targetChatId}`, {
-        method: "DELETE"
+    const res = await fetch(`/api/chat/${targetChatId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) console.error("Failed to delete conversation");
 }

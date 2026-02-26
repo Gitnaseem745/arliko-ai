@@ -1,6 +1,6 @@
 # Arliko AI
 
-A full-stack AI chatbot web app powered by Google's Gemini 2.5 Flash model. Built with Express 5, MongoDB, and vanilla JS. Features a ChatGPT-style dark UI with sidebar, markdown rendering, syntax-highlighted code blocks, auto-generated chat titles, and API rate limiting.
+A full-stack AI chatbot web app powered by Google's Gemini 2.5 Flash model. Built with Express 5, MongoDB, and vanilla JS. Features a ChatGPT-style dark UI with sidebar, markdown rendering, syntax-highlighted code blocks, auto-generated chat titles, JWT-based auth, and API rate limiting.
 
 ## Tech Stack
 
@@ -23,6 +23,7 @@ A full-stack AI chatbot web app powered by Google's Gemini 2.5 Flash model. Buil
 - API rate limiting (general + AI-specific)
 - CORS configuration
 - Responsive design with mobile sidebar toggle
+ - Streamed AI responses (streamline messaging) with progressive rendering
 
 ## Setup
 
@@ -42,9 +43,10 @@ npm install
 3. Create a `.env` file in the root directory (see `.env.example`)
 
 ```
-MONGO_URI=your_mongodb_connection_string
-GEMINI_API_KEY=your_gemini_api_key
-CLIENT_URL=http://localhost:3000
+MONGO_URI=your-mongo-db-uri
+GEMINI_API_KEY=your-gemini-api-key
+CLIENT_URL=your-client-url
+JWT_SECRET=your-jwt-secret
 ```
 
 4. Start the server
@@ -90,10 +92,16 @@ public/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/signup` | Register a new user |
-| `POST` | `/api/login` | Login with email and password |
-| `GET` | `/api/chat/:userId` | Get all conversations for a user |
-| `GET` | `/api/chat/:userId/:chatId` | Get a single conversation |
-| `POST` | `/api/chat/:userId/:chatId` | Send a message and get AI response (rate limited) |
-| `PUT` | `/api/chat/:userId/:chatId` | Edit conversation title |
-| `DELETE` | `/api/chat/:userId/:chatId` | Delete a conversation |
+| `POST` | `/api/signup` | Register a new user — returns `token` and `userId` |
+| `POST` | `/api/login` | Login with email and password — returns `token`, `userId`, `username` |
+| `GET` | `/api/chats` | Get all conversations for the authenticated user (use `Authorization: Bearer <token>`) |
+| `GET` | `/api/chat/:chatId` | Get a single conversation (authenticated) |
+| `POST` | `/api/chat/:chatId` | Send a message and get AI response (rate limited, authenticated) |
+| `PUT` | `/api/chat/:chatId` | Edit conversation title (authenticated) |
+| `DELETE` | `/api/chat/:chatId` | Delete a conversation (authenticated) |
+| `GET` | `/api/chat/stream/:chatId` | SSE streaming response for a message — pass either `Authorization: Bearer <token>` header or `?token=<token>` query parameter |
+
+Notes:
+- Auth is JWT-based. After `signup`/`login` the server returns a signed token which the client stores and sends in `Authorization` header for subsequent API requests.
+- For Server-Sent-Events (EventSource) the token is also accepted via the `token` query parameter to work around EventSource header limitations.
+- Message length is validated (max 100KB) on both frontend and backend to prevent very large payloads being sent to the AI backend.

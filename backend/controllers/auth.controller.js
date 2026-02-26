@@ -1,5 +1,7 @@
 import User from "../models/user.model.js";
 import { hash, compare } from "bcrypt";
+import jwt from "jsonwebtoken";
+import { ENV } from "../config/env.js";
 
 // registers a new user — expects email, password, username in body
 export const signUp = async (req, res, next) => {
@@ -20,8 +22,9 @@ export const signUp = async (req, res, next) => {
         const passwordHash = await hash(password, 10)
 
         const user = await User.create({ email, passwordHash, username });
+        const token = jwt.sign({ userId: user._id }, ENV.JWT_SECRET, { expiresIn: "7d" });
 
-        res.status(201).json({ userId: user._id, message: "User created successfully" });
+        res.status(201).json({ userId: user._id, token, message: "User created successfully" });
     } catch (e) {
         next(e);
     }
@@ -48,7 +51,8 @@ export const login = async (req, res, next) => {
             return res.status(404).json({ error: "Password is invalid." })
         }
 
-        res.json({ userId: user._id, username: user.username, message: "Login successfull." });
+        const token = jwt.sign({ userId: user._id }, ENV.JWT_SECRET, { expiresIn: "7d" });
+        res.json({ userId: user._id, username: user.username, token, message: "Login successfull." });
     } catch (e) {
         next(e);
     }

@@ -5,7 +5,8 @@ import checkParams from "../utils/checkParams.js";
 // fetches a single conversation by chatId, scoped to the user
 export const getConversation = async (req, res, next) => {
     try {
-        const { userId, chatId } = req.params;
+        const { chatId } = req.params;
+        const userId = req.userId;
         checkParams.objectId(userId, "userId");
         checkParams.objectId(chatId, "chatId");
 
@@ -20,7 +21,8 @@ export const getConversation = async (req, res, next) => {
 export const sendMessage = async (req, res, next) => {
     try {
         const { message } = req.body;
-        const { userId, chatId } = req.params;
+        const { chatId } = req.params;
+        const userId = req.userId;
         checkParams.objectId(userId, "userId");
         checkParams.required(chatId, "chatId");
         checkParams.required(message, "message");
@@ -67,7 +69,8 @@ export const sendMessageStream = async (req, res, next) => {
     res.setHeader("Connection", "keep-alive");
 
     const message = req.query.message || req.body.message;
-    const { userId, chatId } = req.params;
+    const { chatId } = req.params;
+    const userId = req.userId;
     checkParams.objectId(userId, "userId");
     checkParams.required(chatId, "chatId");
     checkParams.required(message, "message");
@@ -113,7 +116,7 @@ export const sendMessageStream = async (req, res, next) => {
 // returns all conversation titles for a given user (sorted newest first)
 export const getAllConversations = async (req, res, next) => {
     try {
-        const { userId } = req.params;
+        const userId = req.userId;
         checkParams.objectId(userId, "userId");
 
         const chats = await Conversation.find({ userId }).select("_id title").sort({ updatedAt: -1 });
@@ -125,7 +128,8 @@ export const getAllConversations = async (req, res, next) => {
 
 export const editConversationTitle = async (req, res, next) => {
     try {
-        const { userId, chatId } = req.params;
+        const { chatId } = req.params;
+        const userId = req.userId;
         const { newTitle } = req.body;
         checkParams.objectId(userId, "userId");
         checkParams.objectId(chatId, "chatId");
@@ -143,7 +147,8 @@ export const editConversationTitle = async (req, res, next) => {
 
 export const deleteConversation = async (req, res, next) => {
     try {
-        const { userId, chatId } = req.params;
+        const { chatId } = req.params;
+        const userId = req.userId;
         checkParams.objectId(userId, "userId");
         checkParams.objectId(chatId, "chatId");
 
