@@ -7,6 +7,7 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 import morgan from "morgan";
 import { limiter } from "./utils/limiters.js";
 import { ENV } from "./config/env.js";
+import healthRoutes from "./routes/health.routes.js"
 
 const app = e();
 
@@ -18,6 +19,7 @@ app.use(morgan("dev"))
 app.use(e.json());
 app.use(e.static("public"));
 
+app.use("/", healthRoutes)
 app.use("/api", limiter, authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chats", chatRoutes);
